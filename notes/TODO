@@ -1,0 +1,12 @@
+Things to do still:
+
+* Config file creation and docs
+* Add a way to create subscriptions with Twitch
+* Add additional event types
+* Web interface?
+* Maybe it runs Talon_Bot when you go live?
+
+Possible ideas for later:
+
+* Make an installer, once things get more stable
+* Go multi-user

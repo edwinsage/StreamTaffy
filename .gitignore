@@ -1,0 +1,15 @@
+# Normal usage creates log files
+*.log
+
+# Ignore config files
+.StreamTaffy.rc
+StreamTaffy.rc
+
+# Ignore temporary files
+*.tmp
+
+# Ignore generated database
+*.db
+
+# Ignore files generated for a running instance
+/live/**

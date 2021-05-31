@@ -1,0 +1,73 @@
+<html>
+    <head>
+        <title>My Stream Animated Panels</title>
+        <meta http-equiv="refresh" content="11">
+        <style>
+            #reminderContainer {
+                width: 0px;
+                height: 0px;
+
+                position: absolute;
+                top: 0px;
+                left: 0px;
+                overflow: hidden;
+                color: white;
+                -webkit-animation: animateReminder 8.8s 0s 1;
+                }
+            #reminderHeader {
+                width: 500px;
+                height: 95px;
+                position: relative;
+                overflow: hidden;
+                text-align: center;
+                font-size: 24px;
+                }
+            #reminderContent {
+                width: 500px;
+                height: 125px;
+                background: #2e5794;
+                position: relative;
+                overflow: hidden;
+                text-align: center;
+                color: white;
+                font-size: 50px;
+                }
+            @-webkit-keyframes animateReminder {
+                0%, 100% {
+                    width: 0px;
+                    height: 95px;
+                    }
+                10%, 90% {
+                    width: 500px;
+                    height: 95px;
+                    }
+                15%, 85% {
+                    width: 500px;
+                    height: 220px;
+                    }
+                }
+        </style>
+    </head>
+    <body>
+        <div id="reminderContainer">
+            <div id="reminderHeader">
+                <image id="follow image" src="image.jpg">
+            </div>
+
+            <div id="reminderContent">
+                <div="reminderContentText">
+                    <span>
+                        $USER_NAME<br>just followed!
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div id="player">
+            <audio autoplay hidden>
+             <source src="sound.wav" type="audio/wav">
+                        If you're reading this, audio isn't supported.
+            </audio>
+        </div>
+    </body>
+</html>
+
