@@ -50,6 +50,7 @@ if ($cfg{debug_level})  {
 my $template;
 
 my $type = shift @ARGV;
+my @page;
 
 if ($type eq 'channel.follow')  {
 	my $user_id = shift @ARGV;
@@ -71,7 +72,6 @@ if ($type eq 'channel.follow')  {
 	close LIST;
 	
 	
-	my @page;
 	open TEMPLATE, '<', $cfg{overlay_follow}
 	   or debug 1,"Missing follow template '$cfg{overlay_follow}': $!";
 	while (<TEMPLATE>)  {
@@ -81,6 +81,32 @@ if ($type eq 'channel.follow')  {
 		}
 	close TEMPLATE;
 	
+	}
+elsif ($type eq 'channel.subscribe')  {
+	my $is_gift = shift @ARGV;
+	my $tier = shift @ARGV;
+	my $user_id = shift @ARGV;
+	my $user_name = join '',@ARGV;
+	
+	open TEMPLATE, '<', $cfg{overlay_sub}
+	   or debug 1,"Missing follow template '$cfg{overlay_sub}': $!";
+	while (<TEMPLATE>)  {
+		s/\$USER_NAME/$user_name/g;
+		push @page, $_;
+		
+		}
+	close TEMPLATE;
+	
+	}
+else  {
+	
+	exit;
+	}
+
+&overlay_event(@page);
+
+
+sub overlay_event  {
 	# Use a lock file to block other operations.
 	open LOCK, '<', $cfg{overlay_lock_file}
 	   or debug 1,"Locking failed! $!";
@@ -89,24 +115,9 @@ if ($type eq 'channel.follow')  {
 	# Write the page
 	open TEMP, '>', $cfg{overlay_temp_file}
 	   or debug 1,"Could not open overlay_temp_file '$cfg{overlay_temp_file}' for writing: $!";
-	print TEMP foreach @page;
+	print TEMP foreach @_;
 	close TEMP;
 	
-	
-	&overlay_event;
-	
-	
-	flock LOCK, 8;  # 8 unlocks
-	close LOCK;
-	
-	
-	
-	}
-
-
-
-
-sub overlay_event  {
 	# Get the timeout from the file.
 	my $timer;
 	open OVERLAY, '<', $cfg{overlay_temp_file}
@@ -125,7 +136,7 @@ sub overlay_event  {
 	   or debug 1,"Changing link A failed! $!";
 	
 	# Wait long enough to make sure the previous page has refreshed.
-	sleep 5;
+	sleep 4;
 	
 	link $cfg{overlay_blank}, $cfg{overlay_temp_file}
 	   or debug 1,"Creating temporary link B failed! $!";
@@ -133,8 +144,12 @@ sub overlay_event  {
 	   or debug 1,"Changing link B failed! $!";
 	
 	# Wait for event to end.
-	sleep $timer - 5;
+	sleep $timer - 4;
 	
+	
+	
+	flock LOCK, 8;  # 8 unlocks
+	close LOCK;
 	}
 
 

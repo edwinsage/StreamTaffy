@@ -5,6 +5,9 @@ Things to do still:
 * Add additional event types
 * Web interface?
 * Maybe it runs Talon_Bot when you go live?
+* Make requests for user scopes
+* Allow random selection from multiple templates for a single event type
+
 
 Possible ideas for later:
 

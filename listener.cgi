@@ -91,16 +91,34 @@ exit unless $success and $ENV{HTTP_TWITCH_EVENTSUB_MESSAGE_TYPE} eq 'notificatio
 debug 3,"Continuing...\n";
 
 my $template;
-
+my $args;
 if ($$hash{subscription}{type} eq 'channel.follow')  {
-	my ($user_name, $user_id) = ($$hash{event}{user_name}, $$hash{event}{user_id});
-	my $command = "cd $ENV{DATA_DIR}./;./overlay_event.pl channel.follow $user_id $user_name";
-	debug 2,"Running $command\n";
-	&dispatch ($command);
+	$args = join (' ',
+	    "channel.follow",
+	    $$hash{event}{user_id},
+	    $$hash{event}{user_name}
+	    );
 	
 	}
+elsif ($$hash{subscription}{type} eq 'channel.subscribe')  {
+	$args = join (' ',
+	    "channel.subscribe",
+	    $$hash{event}{is_gift},
+	    $$hash{event}{tier},
+	    $$hash{event}{user_id},
+	    $$hash{event}{user_name}
+	    );
+	
+	}
+else  {
+	debug 1,"Subscription event type $$hash{subscription}{type} not yet supported.";
+	exit;
+	}
 
+my $command = "cd $ENV{DATA_DIR}./;./overlay_event.pl $args";
 
+debug 2,"Running $command\n";
+&dispatch ($command);
 
 
 
