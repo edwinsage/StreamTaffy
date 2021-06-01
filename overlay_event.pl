@@ -71,8 +71,10 @@ if ($type eq 'channel.follow')  {
 	flock LIST, 8;  # Unlock
 	close LIST;
 	
+	my @templates = glob "$cfg{overlay_follow}";
 	
-	open TEMPLATE, '<', $cfg{overlay_follow}
+	
+	open TEMPLATE, '<', $templates[int(rand(@templates))]
 	   or debug 1,"Missing follow template '$cfg{overlay_follow}': $!";
 	while (<TEMPLATE>)  {
 		s/\$USER_NAME/$user_name/g;
@@ -88,7 +90,9 @@ elsif ($type eq 'channel.subscribe')  {
 	my $user_id = shift @ARGV;
 	my $user_name = join '',@ARGV;
 	
-	open TEMPLATE, '<', $cfg{overlay_sub}
+	my @templates = glob "$cfg{overlay_sub}";
+	
+	open TEMPLATE, '<', $templates[int(rand(@templates))]
 	   or debug 1,"Missing follow template '$cfg{overlay_sub}': $!";
 	while (<TEMPLATE>)  {
 		s/\$USER_NAME/$user_name/g;
