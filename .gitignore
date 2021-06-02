@@ -2,8 +2,8 @@
 *.log
 
 # Ignore config files
-.StreamTaffy.rc
-StreamTaffy.rc
+.StreamTaffy.conf
+StreamTaffy.conf
 
 # Ignore temporary files
 *.tmp

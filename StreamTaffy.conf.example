@@ -1,0 +1,54 @@
+# Configuration for StreamTaffy
+# Defaults are shown.
+# Other options may be uncommented and changed.
+
+
+#########################
+##  Essential Config!  ##
+#########################
+
+# StreamTaffy runs as a Twitch Application, and requires registering your
+# instance on Twitch to function.
+client_id = Invalid!
+client_secret = Invalid!
+
+
+
+#############
+##  Files  ##
+#############
+
+# This is the HTML file that should be served to display the overlay.
+#overlay_visible = live/overlay.html
+
+
+# This is the file that the overlay will default to when not handling an event.
+#overlay_default = templates/blank.html
+
+
+# The CGI script will need a directory where it has permission to create and
+# edit files.
+#cgi_live_dir = live/
+
+
+# This is the shell pattern to match for files to use as templates for
+# new follow events.
+#overlay_follow = templates/follow-*.html
+
+
+# If debugging is enabled below, extra information will be written to this file.
+#debug_log = live/debug.log
+
+
+
+#####################
+##  Other Options  ##
+#####################
+
+
+# Set this to a number higher than 0 to enable debugging output to be
+# written to a debug log.  Higher numbers result in more detailed logs.
+#debug_level = 0
+
+
+

@@ -21,21 +21,43 @@ use v5.20;
 use Digest::SHA qw(hmac_sha256_hex);
 use JSON 'decode_json';
 
+# The support files should not be stored in a hosted location with the CGI
+# scripts.  To accommodate this, the web server can be configured to pass a
+# DATA_DIR environment variable to the CGI script, specifying where to look
+# for the remaining files.  If updating from git, it may make sense to use
+# symlinks for the hosted CGI and HTML files which point back to the data dir.
+my $dir;
+if ($ENV{DATA_DIR})  {
+	$dir = $ENV{DATA_DIR};
+	# Remove trailing slash if needed.
+	chop $dir if $dir =~ m|/$|;
+	}
+else  {
+	$dir = '.';
+	}
+$dir .= '/StreamTaffy' if (-d "$dir/StreamTaffy" );
+
 # This file should definitely not be in a location that
 # the webserver is serving.  The recommended method is
 # to set the DATA_DIR environment variable to a safe location
 # in nginx (or other server) config.
-my $config_file;
-$config_file = $ENV{DATA_DIR} if $ENV{DATA_DIR};
-$config_file .= '.StreamTaffy.rc';
+my $config_file = "$dir/.StreamTaffy.conf";
 
 
 
+# Set config defaults.
+my %cfg = (
+	cgi_live_dir => 'live/',
+	overlay_default => 'templates/blank.html',
+	overlay_follow => 'templates/follow-*.html',
+	overlay_visible => 'live/overlay.html',
+	debug_level => 0,
+	
+	debug_log => 'live/debug.log'
+	);
 
-
-my %cfg;
 # Read config from file.
-open ( FILE, $config_file ) or die "Could not find $config_file";
+open ( FILE, $config_file ) or die "Could not open $config_file";
 while (<FILE>)  {
 	# Skip comments and blank lines
 	next if ( /^\s*#/ or /^\s*$/ );
@@ -53,8 +75,8 @@ sub debug ($$);
 
 my $debug;
 if ($cfg{debug_level})  {
-	open DEBUG, '>>', "$ENV{DATA_DIR}$cfg{debug_log}"
-	   or warn "Could not open debug log file '$ENV{DATA_DIR}$cfg{debug_log}' : $!";
+	open DEBUG, '>>', "$dir/$cfg{debug_log}"
+	   or warn "Could not open debug log file '$dir/$cfg{debug_log}' : $!";
 	}
 
 
@@ -115,7 +137,7 @@ else  {
 	exit;
 	}
 
-my $command = "cd $ENV{DATA_DIR}./;./overlay_event.pl $args";
+my $command = "cd $dir;./overlay_event.pl $args";
 
 debug 2,"Running $command\n";
 &dispatch ($command);

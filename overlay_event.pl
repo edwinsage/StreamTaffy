@@ -19,10 +19,19 @@
 
 use v5.20;
 
-my $config_file;
-$config_file .= '.StreamTaffy.rc';
+my $config_file = '.StreamTaffy.conf';
 
-my %cfg;
+# Set config defaults.
+my %cfg = (
+	cgi_live_dir => 'live/',
+	overlay_default => 'templates/blank.html',
+	overlay_follow => 'templates/follow-*.html',
+	overlay_visible => 'live/overlay.html',
+	debug_level => 0,
+	
+	debug_log => 'live/debug.log'
+	);
+
 # Read config from file.
 open ( FILE, $config_file ) or die "Could not find $config_file";
 while (<FILE>)  {
@@ -58,15 +67,15 @@ if ($type eq 'channel.follow')  {
 	
 	# Check for previous follow to prevent spam.
 	# This open command will NOT create the file if it does not exist.
-	open LIST, '+<', $cfg{follower_log}
-	   or debug 1,"Could not open follower log '$cfg{follower_log}': $!";
+	open LIST, '+<', "$cfg{cgi_live_dir}/follower.log"
+	   or debug 1,"Could not open follower log '$cfg{cgi_live_dir}/follower.log': $!";
 	flock LIST, 2;  # Exclusive lock
 	while (<LIST>)  {
-		my ($line) = /^(\d+)/;
-		exit if $line eq $user_id;
+		my ($id) = /^.{19}\t(\d+)/;
+		exit if $id eq $user_id;
 		}
 	# If we made it through, the user ID was not in the list.  Add it.
-	print LIST "$user_id\t$user_name\n";
+	print LIST &timestamp . "\t$user_id\t$user_name\n";
 	
 	flock LIST, 8;  # Unlock
 	close LIST;
@@ -93,7 +102,7 @@ elsif ($type eq 'channel.subscribe')  {
 	my @templates = glob "$cfg{overlay_sub}";
 	
 	open TEMPLATE, '<', $templates[int(rand(@templates))]
-	   or debug 1,"Missing follow template '$cfg{overlay_sub}': $!";
+	   or debug 1,"Missing sub template '$cfg{overlay_sub}': $!";
 	while (<TEMPLATE>)  {
 		s/\$USER_NAME/$user_name/g;
 		push @page, $_;
@@ -112,39 +121,34 @@ else  {
 
 sub overlay_event  {
 	# Use a lock file to block other operations.
-	open LOCK, '<', $cfg{overlay_lock_file}
+	open LOCK, '<', "$cfg{cgi_live_dir}/overlay.lock"
 	   or debug 1,"Locking failed! $!";
 	flock LOCK, 2;  # 2 for exclusive locking
 	
-	# Write the page
-	open TEMP, '>', $cfg{overlay_temp_file}
-	   or debug 1,"Could not open overlay_temp_file '$cfg{overlay_temp_file}' for writing: $!";
-	print TEMP foreach @_;
+	# Get the timeout from the template and write the page.
+	my $timer;
+	open TEMP, '>', "$cfg{cgi_live_dir}/overlay.tmp"
+	   or debug 1,"Could not open overlay_temp_file '$cfg{cgi_live_dir}/overlay.tmp' for writing: $!";
+	foreach (@_)  {
+		print TEMP;
+		$timer = $1 if /meta http-equiv="refresh" content="(\d+)"/;
+		}
 	close TEMP;
 	
-	# Get the timeout from the file.
-	my $timer;
-	open OVERLAY, '<', $cfg{overlay_temp_file}
-	   or debug 1,"Could not open overlay_temp_file '$cfg{overlay_temp_file}' for reading: $!";
-	while (<OVERLAY>)  {
-		($timer) = /meta http-equiv="refresh" content="(\d+)"/;
-		last if $timer;
-		}
-	close OVERLAY;
 	
 	# Minimum timeout
 	$timer = 5 if $timer < 5;
 	
 	# Replace the old link
-	rename $cfg{overlay_temp_file}, $cfg{overlay_visible}
+	rename "$cfg{cgi_live_dir}/overlay.tmp", $cfg{overlay_visible}
 	   or debug 1,"Changing link A failed! $!";
 	
 	# Wait long enough to make sure the previous page has refreshed.
 	sleep 4;
 	
-	link $cfg{overlay_blank}, $cfg{overlay_temp_file}
+	link $cfg{overlay_default}, "$cfg{cgi_live_dir}/overlay.tmp"
 	   or debug 1,"Creating temporary link B failed! $!";
-	rename $cfg{overlay_temp_file}, $cfg{overlay_visible}
+	rename "$cfg{cgi_live_dir}/overlay.tmp", $cfg{overlay_visible}
 	   or debug 1,"Changing link B failed! $!";
 	
 	# Wait for event to end.
