@@ -21,6 +21,14 @@ use v5.20;
 use Digest::SHA qw(hmac_sha256_hex);
 use JSON 'decode_json';
 
+
+
+
+##############
+##  Config  ##
+##############
+
+
 # The support files should not be stored in a hosted location with the CGI
 # scripts.  To accommodate this, the web server can be configured to pass a
 # DATA_DIR environment variable to the CGI script, specifying where to look
@@ -37,17 +45,17 @@ else  {
 	}
 $dir .= '/StreamTaffy' if (-d "$dir/StreamTaffy" );
 
+
 # This file should definitely not be in a location that
 # the webserver is serving.  The recommended method is
 # to set the DATA_DIR environment variable to a safe location
 # in nginx (or other server) config.
-my $config_file = "$dir/.StreamTaffy.conf";
-
+my $config_file = "$dir/StreamTaffy.conf";
 
 
 # Set config defaults.
 my %cfg = (
-	cgi_live_dir => 'live/',
+	cgi_live_dir => 'live',
 	overlay_default => 'templates/blank.html',
 	overlay_follow => 'templates/follow-*.html',
 	overlay_visible => 'live/overlay.html',
@@ -69,6 +77,12 @@ while (<FILE>)  {
 	$cfg{$key} = $value;
 	}
 close FILE;
+
+# Remove trailing slash if needed.
+chop $cfg{cgi_live_dir} if $cfg{cgi_live_dir} =~ m|/$|;
+
+
+
 
 # Predeclare debug prototype.
 sub debug ($$);

@@ -13,6 +13,10 @@ client_id = Invalid!
 client_secret = Invalid!
 
 
+# For now, the secret that was sent to Twitch when creating the EventSub
+# subscription needs to be specified here.
+secret = Whatever you already told Twitch
+
 
 #############
 ##  Files  ##

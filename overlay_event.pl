@@ -18,12 +18,21 @@
 
 
 use v5.20;
+use File::Copy;
 
-my $config_file = '.StreamTaffy.conf';
+
+
+
+##############
+##  Config  ##
+##############
+
+
+my $config_file = 'StreamTaffy.conf';
 
 # Set config defaults.
 my %cfg = (
-	cgi_live_dir => 'live/',
+	cgi_live_dir => 'live',
 	overlay_default => 'templates/blank.html',
 	overlay_follow => 'templates/follow-*.html',
 	overlay_visible => 'live/overlay.html',
@@ -45,6 +54,12 @@ while (<FILE>)  {
 	$cfg{$key} = $value;
 	}
 close FILE;
+
+# Remove trailing slash if needed.
+chop $cfg{cgi_live_dir} if $cfg{cgi_live_dir} =~ m|/$|;
+
+
+
 
 # Predeclare debug prototype.
 sub debug ($$);
@@ -121,8 +136,9 @@ else  {
 
 sub overlay_event  {
 	# Use a lock file to block other operations.
-	open LOCK, '<', "$cfg{cgi_live_dir}/overlay.lock"
-	   or debug 1,"Locking failed! $!";
+	# This file should not have any content; it only serves as a control.
+	open LOCK, '+>', "$cfg{cgi_live_dir}/overlay.lock"
+	   or debug 1,"Locking $cfg{cgi_live_dir}/overlay.lock failed! $!";
 	flock LOCK, 2;  # 2 for exclusive locking
 	
 	# Get the timeout from the template and write the page.
@@ -141,15 +157,15 @@ sub overlay_event  {
 	
 	# Replace the old link
 	rename "$cfg{cgi_live_dir}/overlay.tmp", $cfg{overlay_visible}
-	   or debug 1,"Changing link A failed! $!";
+	   or debug 1,"Moving $cfg{cgi_live_dir}/overlay.tmp to $cfg{overlay_visible} failed! $!";
 	
 	# Wait long enough to make sure the previous page has refreshed.
 	sleep 4;
 	
-	link $cfg{overlay_default}, "$cfg{cgi_live_dir}/overlay.tmp"
-	   or debug 1,"Creating temporary link B failed! $!";
+	copy( $cfg{overlay_default}, "$cfg{cgi_live_dir}/overlay.tmp")
+	   or debug 1,"Creating temporary file $cfg{cgi_live_dir}/overlay.tmp failed! $!";
 	rename "$cfg{cgi_live_dir}/overlay.tmp", $cfg{overlay_visible}
-	   or debug 1,"Changing link B failed! $!";
+	   or debug 1,"Moving $cfg{cgi_live_dir}/overlay.tmp back to $cfg{overlay_visible} failed! $!";
 	
 	# Wait for event to end.
 	sleep $timer - 4;
