@@ -6,7 +6,12 @@
 
 * Provides a web page that shows notifications when certain Twitch events occur.
 
+* Allows multiple templates for each event type, selecting one randomly each
+  time an event occurs.
+
 * Currently only supports follows.
+
+
 
 ### Requirements:
 
@@ -27,17 +32,59 @@
    though it should presumably run well in other similar environments.
 
 
+
 ### How to:
 
-1. Clone the repository with `git clone https://github.com/edwinsage/StreamTaffy`,
+1. On the web host, preferably in a location that is not accessible from the
+   web, clone the repository with `git clone https://github.com/edwinsage/StreamTaffy`,
    or download and extract one of the releases.
 
-1. Um.  Magic?
+1. Configure your web server software to pass the environment variable DATA_DIR
+   to CGI scripts that run.  It should be set to the directory where the
+   repository was cloned, not including the final `StreamTaffy/`.  In the case
+   of nginx using fcgiwrap, this can be done by adding
+   `fastcgi_param DATA_DIR <location>;` to the section of the config that
+   handles CGI files.
+
+1. If needed, modify the permissions of the `StreamTaffy/live` directory to
+   allow writing by the user that CGI scripts are run as.
+
+1. Copy the example config file to StreamTaffy.conf, and at minimum fill in
+   the essential config with the credentials of your registered Twitch
+   application, as well as a secret for verifying received subscription events.
+
+1. In the config file, set overlay_visible to a hosted location.  This will be
+   the page that will be used to display the overlay events.  Your broadcasting
+   software should be configured to display this page as an overlay.
+
+1. Link or copy the file listener.cgi to a hosted location.  This will be the
+   page that will receive subscription events from Twitch.  Using a symlink
+   will allow you to update StreamTaffy in place without having to make
+   additional changes.
+
+1. ...
+
 
 
 ### Hacking:
 
-Not gonna lie, it's a mess in here right now.
+To get useful feedback from the non-interactive scripts, you can set debug_level
+to a number higher than 0 in the config.  Higher numbers output more
+information, with the highest level currently being 3.
+
+The displayed file live/overlay.html is set to refresh automatically every two
+seconds, so that streaming software will notice when the file changes.  Any
+templates created should similarly have a timed refresh after the desired
+display time.  StreamTaffy looks for a line in the template file that matches
+`meta http-equiv="refresh" content="(\d+)"`, capturing the time so that the
+overlay lock can be held for the full duration.  Make sure any templates added
+have a matching line, otherwise the overlay will stop updating.
+
+Any software that intends to modify the overlay should first wait on obtaining
+an exclusive lock on live/overlay.lock, or more specifically
+`$cfg{cgi_live_dir}/overlay.lock`.  On *NIX systems this can be done with
+flock(2), or from withon Perl with the flock command.  This lock should be held
+for the duration of the change.
 
 Note that StreamTaffy is released under the AGPL, meaning that if you
 host the software for other people to use, you must make sure  to include

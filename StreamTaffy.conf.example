@@ -18,6 +18,8 @@ client_secret = Invalid!
 secret = Whatever you already told Twitch
 
 
+
+
 #############
 ##  Files  ##
 #############
@@ -45,10 +47,10 @@ secret = Whatever you already told Twitch
 
 
 
+
 #####################
 ##  Other Options  ##
 #####################
-
 
 # Set this to a number higher than 0 to enable debugging output to be
 # written to a debug log.  Higher numbers result in more detailed logs.
