@@ -13,3 +13,6 @@ StreamTaffy.conf
 
 # Ignore files generated for a running instance
 /live/**
+
+# Ignore any templates that aren't explicitly tracked
+/templates/**
