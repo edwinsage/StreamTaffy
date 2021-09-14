@@ -36,6 +36,7 @@ my %cfg = (
 	overlay_default => 'templates/blank.html',
 	overlay_follow => 'templates/follow-*.html',
 	overlay_visible => 'live/overlay.html',
+	overlay_newsub => 'templates/newsub-*.html',
 	debug_level => 0,
 	
 	debug_log => 'live/debug.log'
@@ -114,10 +115,10 @@ elsif ($type eq 'channel.subscribe')  {
 	my $user_id = shift @ARGV;
 	my $user_name = join '',@ARGV;
 	
-	my @templates = glob "$cfg{overlay_sub}";
+	my @templates = glob "$cfg{overlay_newsub}";
 	
 	open TEMPLATE, '<', $templates[int(rand(@templates))]
-	   or debug 1,"Missing sub template '$cfg{overlay_sub}': $!";
+	   or debug 1,"Missing sub template '$cfg{overlay_newsub}': $!";
 	while (<TEMPLATE>)  {
 		s/\$USER_NAME/$user_name/g;
 		push @page, $_;

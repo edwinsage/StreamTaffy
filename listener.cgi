@@ -59,6 +59,7 @@ my %cfg = (
 	overlay_default => 'templates/blank.html',
 	overlay_follow => 'templates/follow-*.html',
 	overlay_visible => 'live/overlay.html',
+	overlay_newsub => 'templates/newsub-*.html',
 	debug_level => 0,
 	
 	debug_log => 'live/debug.log'
