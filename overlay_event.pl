@@ -82,38 +82,55 @@ if ($type eq 'channel.follow')  {
 	my $user_name = join '',@ARGV;
 	
 	# Check for previous follow to prevent spam.
-	# This open command will NOT create the file if it does not exist.
-	open LIST, '+<', "$cfg{cgi_live_dir}/follower.log"
-	   or debug 1,"Could not open follower log '$cfg{cgi_live_dir}/follower.log': $!";
-	flock LIST, 2;  # Exclusive lock
-	while (<LIST>)  {
+	my $file = "$cfg{cgi_live_dir}/follower.log";
+	my $fh;
+	
+	# Try creating the log if it does not exist.
+	if (-f $file)  {
+		open $fh, '+<', $file
+		   or debug 1,"Could not open follower log '$file': $!";
+		}
+	else  {
+		open $fh, '+>', $file
+		   or debug 1,"Could not create follower log '$file': $!";
+		}
+	
+	flock $fh, 2;  # Exclusive lock
+	
+	while (<$fh>)  {
 		my ($id) = /^.{19}\t(\d+)/;
 		exit if $id eq $user_id;
 		}
 	# If we made it through, the user ID was not in the list.  Add it.
-	print LIST &timestamp . "\t$user_id\t$user_name\n";
+	print $fh &timestamp . "\t$user_id\t$user_name\n";
 	
-	flock LIST, 8;  # Unlock
-	close LIST;
+	flock $fh, 8;  # Unlock
+	close $fh;
+	
 	
 	my @templates = glob "$cfg{overlay_follow}";
 	
-	
-	open TEMPLATE, '<', $templates[int(rand(@templates))]
+	open $fh, '<', $templates[int(rand(@templates))]
 	   or debug 1,"Missing follow template '$cfg{overlay_follow}': $!";
-	while (<TEMPLATE>)  {
+	while (<$fh>)  {
 		s/\$USER_NAME/$user_name/g;
 		push @page, $_;
 		
 		}
-	close TEMPLATE;
+	close $fh;
 	
 	}
 elsif ($type eq 'channel.subscribe')  {
+	my $event_id = shift @ARGV;
 	my $is_gift = shift @ARGV;
 	my $tier = shift @ARGV;
 	my $user_id = shift @ARGV;
 	my $user_name = join '',@ARGV;
+	
+	# Check for a duplicate event ID.
+	exit if &duplicate_event_check($event_id);
+	
+	
 	
 	my @templates = glob "$cfg{overlay_newsub}";
 	
@@ -192,3 +209,43 @@ sub timestamp  {
 	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
 	return sprintf ( "%d\.%02d.%02d-%02d:%02d:%02d", ($year + 1900, $mon + 1, $mday, $hour, $min, $sec) );
 	}
+
+
+sub duplicate_event_check  {
+	
+	my ($id) = @_;
+	
+	my $file = "$cfg{cgi_live_dir}/event.log";
+	my $fh;
+	
+	# Try creating the log if it does not exist.
+	if (-f $file)  {
+		open $fh, '+<', $file
+		   or debug 1,"Could not open event log '$file': $!";
+		}
+	else  {
+		open $fh, '+>', $file
+		   or debug 1,"Could not create event log '$file': $!";
+		}
+	
+	flock $fh, 2;  # Exclusive lock
+	
+	# Check for an existing event first.
+	while (<$fh>)  {
+		chomp;
+		# Return 1 for duplicates.
+		return 1 if $id eq $_;
+		}
+	
+	
+	# If we made it through, the user ID was not in the list.  Add it.
+	print $fh "$id\n";
+	
+	flock $fh, 8;  # Unlock
+	close $fh;
+	
+	# If no duplicate was detected, return false.
+	return 0;
+	}
+
+

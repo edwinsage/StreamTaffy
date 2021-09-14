@@ -140,6 +140,7 @@ if ($$hash{subscription}{type} eq 'channel.follow')  {
 elsif ($$hash{subscription}{type} eq 'channel.subscribe')  {
 	$args = join (' ',
 	    "channel.subscribe",
+	    $ENV{HTTP_TWITCH_EVENTSUB_MESSAGE_ID},
 	    $$hash{event}{is_gift},
 	    $$hash{event}{tier},
 	    $$hash{event}{user_id},
