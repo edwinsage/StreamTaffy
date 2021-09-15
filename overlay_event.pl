@@ -34,9 +34,10 @@ my $config_file = 'StreamTaffy.conf';
 my %cfg = (
 	cgi_live_dir => 'live',
 	overlay_default => 'templates/blank.html',
-	overlay_follow => 'templates/follow-*.html',
 	overlay_visible => 'live/overlay.html',
+	overlay_follow => 'templates/follow-*.html',
 	overlay_newsub => 'templates/newsub-*.html',
+	overlay_resub => 'templates/resub-*.html',
 	debug_level => 0,
 	
 	debug_log => 'live/debug.log'
@@ -78,8 +79,7 @@ my $type = shift @ARGV;
 my @page;
 
 if ($type eq 'channel.follow')  {
-	my $user_id = shift @ARGV;
-	my $user_name = join '',@ARGV;
+	my ($user_id, $user_name) = @ARGV;
 	
 	# Check for previous follow to prevent spam.
 	my $file = "$cfg{cgi_live_dir}/follower.log";
@@ -110,6 +110,11 @@ if ($type eq 'channel.follow')  {
 	
 	my @templates = glob "$cfg{overlay_follow}";
 	
+	unless (@templates)  {
+		debug 1,"No templates found matching pattern $cfg{overlay_follow}";
+		exit;
+		}
+	
 	open $fh, '<', $templates[int(rand(@templates))]
 	   or debug 1,"Missing follow template '$cfg{overlay_follow}': $!";
 	while (<$fh>)  {
@@ -121,11 +126,12 @@ if ($type eq 'channel.follow')  {
 	
 	}
 elsif ($type eq 'channel.subscribe')  {
-	my $event_id = shift @ARGV;
-	my $is_gift = shift @ARGV;
-	my $tier = shift @ARGV;
-	my $user_id = shift @ARGV;
-	my $user_name = join '',@ARGV;
+	my ($event_id,
+	    $is_gift,
+	    $tier,
+	    $user_id,
+	    $user_name
+	    ) = @ARGV;
 	
 	# Check for a duplicate event ID.
 	exit if &duplicate_event_check($event_id);
@@ -134,10 +140,50 @@ elsif ($type eq 'channel.subscribe')  {
 	
 	my @templates = glob "$cfg{overlay_newsub}";
 	
+	unless (@templates)  {
+		debug 1,"No templates found matching pattern $cfg{overlay_newsub}";
+		exit;
+		}
+	
 	open TEMPLATE, '<', $templates[int(rand(@templates))]
 	   or debug 1,"Missing sub template '$cfg{overlay_newsub}': $!";
 	while (<TEMPLATE>)  {
 		s/\$USER_NAME/$user_name/g;
+		push @page, $_;
+		
+		}
+	close TEMPLATE;
+	
+	}
+elsif ($type eq 'channel.subscription.message')  {
+	my ($event_id,
+	    $is_gift,
+	    $tier,
+	    $user_id,
+	    $user_name,
+	    $message
+	    ) = @ARGV;
+	
+	# Check for a duplicate event ID.
+	exit if &duplicate_event_check($event_id);
+	
+	# Text in message must be escaped properly.
+	$message =~ s/&/\&amp;/g;
+	$message =~ s/</\&lt;/g;
+	$message =~ s/>/\&gt;/g;
+	
+	my @templates = glob "$cfg{overlay_resub}";
+	
+	unless (@templates)  {
+		debug 1,"No templates found matching pattern $cfg{overlay_resub}";
+		exit;
+		}
+	
+	open TEMPLATE, '<', $templates[int(rand(@templates))]
+	   or debug 1,"Missing sub template '$cfg{overlay_resub}': $!";
+	while (<TEMPLATE>)  {
+		s/\$USER_NAME/$user_name/g;
+		s/\$MESSAGE/$message/g;
 		push @page, $_;
 		
 		}
@@ -234,12 +280,12 @@ sub duplicate_event_check  {
 	while (<$fh>)  {
 		chomp;
 		# Return 1 for duplicates.
-		return 1 if $id eq $_;
+		return 1 if $id eq substr $_, 20;
 		}
 	
 	
 	# If we made it through, the user ID was not in the list.  Add it.
-	print $fh "$id\n";
+	print $fh &timestamp . " $id\n";
 	
 	flock $fh, 8;  # Unlock
 	close $fh;

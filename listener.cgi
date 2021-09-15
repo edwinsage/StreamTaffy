@@ -128,23 +128,30 @@ exit unless $success and $ENV{HTTP_TWITCH_EVENTSUB_MESSAGE_TYPE} eq 'notificatio
 debug 3,"Continuing...\n";
 
 my $template;
-my $args;
+my @args = ($$hash{subscription}{type});
 if ($$hash{subscription}{type} eq 'channel.follow')  {
-	$args = join (' ',
-	    "channel.follow",
-	    $$hash{event}{user_id},
-	    $$hash{event}{user_name}
-	    );
-	
+	push @args, ($$hash{event}{user_id}, $$hash{event}{user_name});
 	}
 elsif ($$hash{subscription}{type} eq 'channel.subscribe')  {
-	$args = join (' ',
-	    "channel.subscribe",
+	push @args, (
 	    $ENV{HTTP_TWITCH_EVENTSUB_MESSAGE_ID},
 	    $$hash{event}{is_gift},
 	    $$hash{event}{tier},
 	    $$hash{event}{user_id},
 	    $$hash{event}{user_name}
+	    );
+	
+	}
+elsif ($$hash{subscription}{type} eq 'channel.subscription.message')  {
+	push @args, (
+	    $ENV{HTTP_TWITCH_EVENTSUB_MESSAGE_ID},
+	    $$hash{event}{cumulative_months},
+	    $$hash{event}{tier},
+	    $$hash{event}{user_id},
+	    $$hash{event}{user_name},
+	    $$hash{event}{message}{text}
+	    # This won't work for translating emotes in the future,
+	    # but it's good enough for now.
 	    );
 	
 	}
