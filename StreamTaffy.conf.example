@@ -46,6 +46,9 @@ secret = Whatever you already told Twitch
 # First-time subscribers
 #overlay_newsub = templates/newsub-*.html
 
+# Resubscribers, when they post a resub message
+#overlay_resub = templates/resub-*.html
+
 
 # If debugging is enabled below, extra information will be written to this file.
 #debug_log = live/debug.log

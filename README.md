@@ -16,7 +16,7 @@ than is given by other existing overlay services.
 * Allows multiple templates for each event type, selecting one randomly each
   time an event occurs.
 
-* Currently only supports follows.
+* Currently supports follow and subscription events.
 
 
 

@@ -1,11 +1,13 @@
 Things to do still:
 
 * Config file creation and docs
+* Document template substitutions
 * Add a way to create subscriptions with Twitch
 * Add additional event types
 * Web interface?
 * Maybe it runs Talon_Bot when you go live?
 * Make requests for user scopes
+* Write some code to translate emotes to images
 
 
 Possible ideas for later:
