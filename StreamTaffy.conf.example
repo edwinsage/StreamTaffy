@@ -37,9 +37,17 @@ secret = Whatever you already told Twitch
 #cgi_live_dir = live/
 
 
-# This is the shell pattern to match for files to use as templates for
-# new follow events.
+# These are the shell patterns to match for files to use as templates for
+# various triggered events.
+
+# New followers
 #overlay_follow = templates/follow-*.html
+
+# First-time subscribers
+#overlay_newsub = templates/newsub-*.html
+
+# Resubscribers, when they post a resub message
+#overlay_resub = templates/resub-*.html
 
 
 # If debugging is enabled below, extra information will be written to this file.

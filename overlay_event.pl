@@ -34,8 +34,10 @@ my $config_file = 'StreamTaffy.conf';
 my %cfg = (
 	cgi_live_dir => 'live',
 	overlay_default => 'templates/blank.html',
-	overlay_follow => 'templates/follow-*.html',
 	overlay_visible => 'live/overlay.html',
+	overlay_follow => 'templates/follow-*.html',
+	overlay_newsub => 'templates/newsub-*.html',
+	overlay_resub => 'templates/resub-*.html',
 	debug_level => 0,
 	
 	debug_log => 'live/debug.log'
@@ -77,29 +79,74 @@ my $type = shift @ARGV;
 my @page;
 
 if ($type eq 'channel.follow')  {
-	my $user_id = shift @ARGV;
-	my $user_name = join '',@ARGV;
+	my ($user_id, $user_name) = @ARGV;
 	
 	# Check for previous follow to prevent spam.
-	# This open command will NOT create the file if it does not exist.
-	open LIST, '+<', "$cfg{cgi_live_dir}/follower.log"
-	   or debug 1,"Could not open follower log '$cfg{cgi_live_dir}/follower.log': $!";
-	flock LIST, 2;  # Exclusive lock
-	while (<LIST>)  {
+	my $file = "$cfg{cgi_live_dir}/follower.log";
+	my $fh;
+	
+	# Try creating the log if it does not exist.
+	if (-f $file)  {
+		open $fh, '+<', $file
+		   or debug 1,"Could not open follower log '$file': $!";
+		}
+	else  {
+		open $fh, '+>', $file
+		   or debug 1,"Could not create follower log '$file': $!";
+		}
+	
+	flock $fh, 2;  # Exclusive lock
+	
+	while (<$fh>)  {
 		my ($id) = /^.{19}\t(\d+)/;
 		exit if $id eq $user_id;
 		}
 	# If we made it through, the user ID was not in the list.  Add it.
-	print LIST &timestamp . "\t$user_id\t$user_name\n";
+	print $fh &timestamp . "\t$user_id\t$user_name\n";
 	
-	flock LIST, 8;  # Unlock
-	close LIST;
+	flock $fh, 8;  # Unlock
+	close $fh;
+	
 	
 	my @templates = glob "$cfg{overlay_follow}";
 	
+	unless (@templates)  {
+		debug 1,"No templates found matching pattern $cfg{overlay_follow}";
+		exit;
+		}
+	
+	open $fh, '<', $templates[int(rand(@templates))]
+	   or debug 1,"Missing follow template '$cfg{overlay_follow}': $!";
+	while (<$fh>)  {
+		s/\$USER_NAME/$user_name/g;
+		push @page, $_;
+		
+		}
+	close $fh;
+	
+	}
+elsif ($type eq 'channel.subscribe')  {
+	my ($event_id,
+	    $is_gift,
+	    $tier,
+	    $user_id,
+	    $user_name
+	    ) = @ARGV;
+	
+	# Check for a duplicate event ID.
+	exit if &duplicate_event_check($event_id);
+	
+	
+	
+	my @templates = glob "$cfg{overlay_newsub}";
+	
+	unless (@templates)  {
+		debug 1,"No templates found matching pattern $cfg{overlay_newsub}";
+		exit;
+		}
 	
 	open TEMPLATE, '<', $templates[int(rand(@templates))]
-	   or debug 1,"Missing follow template '$cfg{overlay_follow}': $!";
+	   or debug 1,"Missing sub template '$cfg{overlay_newsub}': $!";
 	while (<TEMPLATE>)  {
 		s/\$USER_NAME/$user_name/g;
 		push @page, $_;
@@ -108,18 +155,35 @@ if ($type eq 'channel.follow')  {
 	close TEMPLATE;
 	
 	}
-elsif ($type eq 'channel.subscribe')  {
-	my $is_gift = shift @ARGV;
-	my $tier = shift @ARGV;
-	my $user_id = shift @ARGV;
-	my $user_name = join '',@ARGV;
+elsif ($type eq 'channel.subscription.message')  {
+	my ($event_id,
+	    $is_gift,
+	    $tier,
+	    $user_id,
+	    $user_name,
+	    $message
+	    ) = @ARGV;
 	
-	my @templates = glob "$cfg{overlay_sub}";
+	# Check for a duplicate event ID.
+	exit if &duplicate_event_check($event_id);
+	
+	# Text in message must be escaped properly.
+	$message =~ s/&/\&amp;/g;
+	$message =~ s/</\&lt;/g;
+	$message =~ s/>/\&gt;/g;
+	
+	my @templates = glob "$cfg{overlay_resub}";
+	
+	unless (@templates)  {
+		debug 1,"No templates found matching pattern $cfg{overlay_resub}";
+		exit;
+		}
 	
 	open TEMPLATE, '<', $templates[int(rand(@templates))]
-	   or debug 1,"Missing sub template '$cfg{overlay_sub}': $!";
+	   or debug 1,"Missing sub template '$cfg{overlay_resub}': $!";
 	while (<TEMPLATE>)  {
 		s/\$USER_NAME/$user_name/g;
+		s/\$MESSAGE/$message/g;
 		push @page, $_;
 		
 		}
@@ -191,3 +255,43 @@ sub timestamp  {
 	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
 	return sprintf ( "%d\.%02d.%02d-%02d:%02d:%02d", ($year + 1900, $mon + 1, $mday, $hour, $min, $sec) );
 	}
+
+
+sub duplicate_event_check  {
+	
+	my ($id) = @_;
+	
+	my $file = "$cfg{cgi_live_dir}/event.log";
+	my $fh;
+	
+	# Try creating the log if it does not exist.
+	if (-f $file)  {
+		open $fh, '+<', $file
+		   or debug 1,"Could not open event log '$file': $!";
+		}
+	else  {
+		open $fh, '+>', $file
+		   or debug 1,"Could not create event log '$file': $!";
+		}
+	
+	flock $fh, 2;  # Exclusive lock
+	
+	# Check for an existing event first.
+	while (<$fh>)  {
+		chomp;
+		# Return 1 for duplicates.
+		return 1 if $id eq substr $_, 20;
+		}
+	
+	
+	# If we made it through, the user ID was not in the list.  Add it.
+	print $fh &timestamp . " $id\n";
+	
+	flock $fh, 8;  # Unlock
+	close $fh;
+	
+	# If no duplicate was detected, return false.
+	return 0;
+	}
+
+

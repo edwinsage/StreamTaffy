@@ -1,6 +1,13 @@
 # StreamTaffy - An open source overlay engine for Twitch streams
 
-
+StreamTaffy is an overlay engine designed for use on Twitch streams.
+Unlike most Twitch Applications, which are run by a single organization
+and are used to service countless users,
+StreamTaffy is designed to be run as your very own Twitch Application.
+It is intended for use by individuals or groups
+with at least some programming experience,
+who are looking for a more thoroughly customizeable experience
+than is given by other existing overlay services.
 
 ### Features:
 
@@ -9,7 +16,7 @@
 * Allows multiple templates for each event type, selecting one randomly each
   time an event occurs.
 
-* Currently only supports follows.
+* Currently supports follow and subscription events.
 
 
 
@@ -23,13 +30,13 @@
   from.  Twitch requires https to be correctly configured for EventSub
   endpoints.  The host must have:
 
-** Perl, minimum v5.20.  This could be lowered with little effort if needed,
-   but for simplicity a non-ancient version is assumed.
+* * Perl, minimum v5.20.  This could be lowered with little effort if needed,
+    but for simplicity a non-ancient version is assumed.
 
-** Perl modules Digest::SHA and JSON.
+* * Perl modules Digest::SHA and JSON.
 
-** A POSIX environment to run in - StreamTaffy has only been tested on Linux,
-   though it should presumably run well in other similar environments.
+* * A POSIX environment to run in - StreamTaffy has only been tested on Linux,
+    though it should presumably run well in other similar environments.
 
 
 
@@ -83,7 +90,7 @@ have a matching line, otherwise the overlay will stop updating.
 Any software that intends to modify the overlay should first wait on obtaining
 an exclusive lock on live/overlay.lock, or more specifically
 `$cfg{cgi_live_dir}/overlay.lock`.  On *NIX systems this can be done with
-flock(2), or from withon Perl with the flock command.  This lock should be held
+flock(2), or from within Perl with the flock command.  This lock should be held
 for the duration of the change.
 
 Note that StreamTaffy is released under the AGPL, meaning that if you
