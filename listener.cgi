@@ -118,6 +118,7 @@ if ($ENV{HTTP_TWITCH_EVENTSUB_MESSAGE_SIGNATURE} eq 'sha256=' . $digest)  {
 	$success = 'yes';
 	}
 else  {
+	debug 3,"Failed signature check!";
 	$output = "Status: 409\n";
 	}
 
@@ -148,8 +149,9 @@ elsif ($$hash{subscription}{type} eq 'channel.subscription.message')  {
 	    $$hash{event}{cumulative_months},
 	    $$hash{event}{tier},
 	    $$hash{event}{user_id},
-	    $$hash{event}{user_name},
-	    $$hash{event}{message}{text}
+	    $$hash{event}{user_name}
+	    # Message text needs escaping
+	    #$$hash{event}{message}{text}
 	    # This won't work for translating emotes in the future,
 	    # but it's good enough for now.
 	    );
@@ -160,7 +162,7 @@ else  {
 	exit;
 	}
 
-my $command = "cd $dir;./overlay_event.pl $args";
+my $command = "cd $dir;./overlay_event.pl " . join( ' ', @args );
 
 debug 2,"Running $command\n";
 &dispatch ($command);
