@@ -79,7 +79,9 @@ my $type = shift @ARGV;
 my @page;
 
 if ($type eq 'channel.follow')  {
-	my ($user_id, $user_name) = @ARGV;
+	#my ($user_id, $user_name) = @ARGV;
+	my $user_id = shift @ARGV;
+	my $user_name = join '',@ARGV;
 	
 	# Check for previous follow to prevent spam.
 	my $file = "$cfg{cgi_live_dir}/follower.log";
@@ -126,12 +128,18 @@ if ($type eq 'channel.follow')  {
 	
 	}
 elsif ($type eq 'channel.subscribe')  {
-	my ($event_id,
-	    $is_gift,
-	    $tier,
-	    $user_id,
-	    $user_name
-	    ) = @ARGV;
+	#my ($event_id,
+	#    $is_gift,
+	#    $tier,
+	#    $user_id,
+	#    $user_name
+	#    ) = @ARGV;
+	
+	my $event_id = shift @ARGV;
+	my $is_gift = shift @ARGV;
+	my $tier = shift @ARGV;
+	my $user_id = shift @ARGV;
+	my $user_name = join '',@ARGV;
 	
 	# Check for a duplicate event ID.
 	exit if &duplicate_event_check($event_id);
@@ -156,21 +164,28 @@ elsif ($type eq 'channel.subscribe')  {
 	
 	}
 elsif ($type eq 'channel.subscription.message')  {
-	my ($event_id,
-	    $months,
-	    $tier,
-	    $user_id,
-	    $user_name,
-	    $message
-	    ) = @ARGV;
+	#my ($event_id,
+	#    $months,
+	#    $tier,
+	#    $user_id,
+	#    $user_name,
+	#    $message
+	#    ) = @ARGV;
+	
+	my $event_id = shift @ARGV;
+	my $months = shift @ARGV;
+	my $tier = shift @ARGV;
+	my $user_id = shift @ARGV;
+	my $user_name = join '',@ARGV;
+	
 	
 	# Check for a duplicate event ID.
 	exit if &duplicate_event_check($event_id);
 	
 	# Text in message must be escaped properly.
-	$message =~ s/&/\&amp;/g;
-	$message =~ s/</\&lt;/g;
-	$message =~ s/>/\&gt;/g;
+	#$message =~ s/&/\&amp;/g;
+	#$message =~ s/</\&lt;/g;
+	#$message =~ s/>/\&gt;/g;
 	
 	my @templates = glob "$cfg{overlay_resub}";
 	
@@ -183,7 +198,7 @@ elsif ($type eq 'channel.subscription.message')  {
 	   or debug 1,"Missing sub template '$cfg{overlay_resub}': $!";
 	while (<TEMPLATE>)  {
 		s/\$USER_NAME/$user_name/g;
-		s/\$MESSAGE/$message/g;
+		#s/\$MESSAGE/$message/g;
 		s/\$MONTHS/$months/g;
 		push @page, $_;
 		
