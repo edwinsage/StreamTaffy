@@ -157,7 +157,7 @@ elsif ($type eq 'channel.subscribe')  {
 	}
 elsif ($type eq 'channel.subscription.message')  {
 	my ($event_id,
-	    $is_gift,
+	    $months,
 	    $tier,
 	    $user_id,
 	    $user_name,
@@ -184,6 +184,7 @@ elsif ($type eq 'channel.subscription.message')  {
 	while (<TEMPLATE>)  {
 		s/\$USER_NAME/$user_name/g;
 		s/\$MESSAGE/$message/g;
+		s/\$MONTHS/$months/g;
 		push @page, $_;
 		
 		}
