@@ -101,7 +101,6 @@ read(STDIN, $buffer, $ENV{'CONTENT_LENGTH'});
 
 
 debug 1,"\n\n-----\n\n";
-debug 2,"\nInput stream:\n";
 debug 3,$_ foreach( sort `env` );
 debug 2,"$buffer\n";
 
