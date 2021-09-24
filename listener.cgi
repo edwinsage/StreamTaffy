@@ -144,6 +144,13 @@ elsif ($$hash{subscription}{type} eq 'channel.subscribe')  {
 	
 	}
 elsif ($$hash{subscription}{type} eq 'channel.subscription.message')  {
+	
+	# Don't fire overlays for both the channel.subscribe event and this one.
+	if ($$hash{event}{cumulative_months} eq '1')  {
+		debug 1,"Skipping sub message notification for $$hash{event}{user_name} as this is a first month sub.";
+		exit;
+		}
+	
 	push @args, (
 	    $ENV{HTTP_TWITCH_EVENTSUB_MESSAGE_ID},
 	    $$hash{event}{cumulative_months},
