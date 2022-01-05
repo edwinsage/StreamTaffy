@@ -83,31 +83,11 @@ if ($type eq 'channel.follow')  {
 	my $user_id = shift @ARGV;
 	my $user_name = join '',@ARGV;
 	
-	# Check for previous follow to prevent spam.
-	my $file = "$cfg{cgi_live_dir}/follower.log";
-	my $fh;
-	
-	# Try creating the log if it does not exist.
-	if (-f $file)  {
-		open $fh, '+<', $file
-		   or debug 1,"Could not open follower log '$file': $!";
-		}
-	else  {
-		open $fh, '+>', $file
-		   or debug 1,"Could not create follower log '$file': $!";
-		}
-	
-	flock $fh, 2;  # Exclusive lock
-	
-	while (<$fh>)  {
-		my ($id) = /^.{19}\t(\d+)/;
-		exit if $id eq $user_id;
-		}
-	# If we made it through, the user ID was not in the list.  Add it.
-	print $fh &timestamp . "\t$user_id\t$user_name\n";
-	
-	flock $fh, 8;  # Unlock
-	close $fh;
+	# Check for previous follow.
+	first_time_event( type => 'follower',
+	                  user_name => $user_name,
+	                  user_id => $user_id
+	                  );
 	
 	
 	my @templates = glob "$cfg{overlay_follow}";
@@ -117,6 +97,7 @@ if ($type eq 'channel.follow')  {
 		exit;
 		}
 	
+	my $fh;
 	open $fh, '<', $templates[int(rand(@templates))]
 	   or debug 1,"Missing follow template '$cfg{overlay_follow}': $!";
 	while (<$fh>)  {
@@ -141,8 +122,11 @@ elsif ($type eq 'channel.subscribe')  {
 	my $user_id = shift @ARGV;
 	my $user_name = join '',@ARGV;
 	
-	# Check for a duplicate event ID.
-	exit if &duplicate_event_check($event_id);
+	# Check for previous subscription.
+	first_time_event( type => 'subscription',
+	                  user_name => $user_name,
+	                  user_id => $user_id
+	                  );
 	
 	
 	
@@ -270,6 +254,43 @@ sub debug ($$)  {
 sub timestamp  {
 	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
 	return sprintf ( "%d\.%02d.%02d-%02d:%02d:%02d", ($year + 1900, $mon + 1, $mday, $hour, $min, $sec) );
+	}
+
+
+sub first_time_event  {
+	my %event = @_;
+	
+	# Check for a previous instance of a user event,
+	# and log it if it's the first.
+	
+	# %event should contain a user_name, user_id, and type.
+	
+	# Check for previous follow to prevent spam.
+	my $file = "$cfg{cgi_live_dir}/$event{type}.log";
+	my $fh;
+	
+	# Try creating the log if it does not exist.
+	if (-f $file)  {
+		open $fh, '+<', $file
+		   or debug 1,"Could not open log file '$file': $!";
+		}
+	else  {
+		open $fh, '+>', $file
+		   or debug 1,"Could not create log file '$file': $!";
+		}
+	
+	flock $fh, 2;  # Exclusive lock
+	
+	while (<$fh>)  {
+		my ($id) = /^.{19}\t(\d+)/;
+		exit if $id eq $event{user_id};
+		}
+	# If we made it through, the user ID was not in the list.  Add it.
+	print $fh &timestamp . "\t$event{user_id}\t$event{user_name}\n";
+	
+	flock $fh, 8;  # Unlock
+	close $fh;
+	return;
 	}
 
 
