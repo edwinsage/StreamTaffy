@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with StreamTaffy.  If not, see <https://www.gnu.org/licenses/>.
 #
-# Copyright 2021 Michael Pirkola
+# Copyright 2021, 2022 Michael Pirkola
 
 
 use v5.20;
@@ -95,15 +95,22 @@ if ($cfg{debug_level})  {
 	}
 
 
-my $buffer;
 
+
+# Read the message sent by Twitch into $buffer.
+my $buffer;
 read(STDIN, $buffer, $ENV{'CONTENT_LENGTH'});
 
 
+# Optional debug output
 debug 1,"\n\n-----\n\n";
 debug 3,$_ foreach( sort `env` );
 debug 2,"$buffer\n";
 
+
+
+
+# Verify that the message is authentic by hashing with the secret.
 my $message = $ENV{HTTP_TWITCH_EVENTSUB_MESSAGE_ID} .
               $ENV{HTTP_TWITCH_EVENTSUB_MESSAGE_TIMESTAMP} .
               $buffer;
@@ -125,9 +132,14 @@ else  {
 say $output;
 debug 3,"\nOutput:\n$output\n";
 
+# If it failed the check or the message is not supported, exit.
 exit unless $success and $ENV{HTTP_TWITCH_EVENTSUB_MESSAGE_TYPE} eq 'notification';
 debug 3,"Continuing...\n";
 
+
+
+
+# Parse the message and call overlay_event.pl
 my $template;
 my @args = ($$hash{subscription}{type});
 if ($$hash{subscription}{type} eq 'channel.follow')  {
@@ -175,6 +187,11 @@ debug 2,"Running $command\n";
 &dispatch ($command);
 
 
+
+
+#################
+#  Subroutines  #
+#################
 
 sub debug ($$)  {
 	my ($level, $msg) = @_;

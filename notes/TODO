@@ -1,5 +1,6 @@
 Things to do still:
 
+* Use temporary files to pass info from listener.cgi to overlay_event.pl
 * Config file creation and docs
 * Document template substitutions
 * Add a way to create subscriptions with Twitch
