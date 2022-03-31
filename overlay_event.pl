@@ -154,7 +154,7 @@ elsif ($type eq 'channel.subscription.message')  {
 	
 	
 	# Check for a duplicate event ID.
-	exit if &duplicate_event_check($event_id);
+	exit if duplicate_event_check($event_id);
 	
 	# Text in message must be escaped properly.
 	#$message =~ s/&/\&amp;/g;
@@ -181,7 +181,7 @@ else  {
 	}
 
 # Now display the result!
-&overlay_event(@page);
+overlay_event(@page);
 
 
 
@@ -240,7 +240,7 @@ sub debug ($$)  {
 	my ($level, $msg) = @_;
 	return unless $cfg{debug_level} >= $level;
 	chomp $msg;
-	print DEBUG &timestamp . " DEBUG$level: $msg\n";
+	print DEBUG timestamp() . " DEBUG$level: $msg\n";
 	warn "DEBUG$level: $msg";
 	}
 
@@ -281,7 +281,7 @@ sub first_time_event  {
 		exit if $id eq $event{user_id};
 		}
 	# If we made it through, the user ID was not in the list.  Add it.
-	print $fh &timestamp . "\t$event{user_id}\t$event{user_name}\n";
+	print $fh timestamp() . "\t$event{user_id}\t$event{user_name}\n";
 	
 	flock $fh, 8;  # Unlock
 	close $fh;
@@ -317,7 +317,7 @@ sub duplicate_event_check  {
 	
 	
 	# If we made it through, the user ID was not in the list.  Add it.
-	print $fh &timestamp . " $id\n";
+	print $fh timestamp() . " $id\n";
 	
 	flock $fh, 8;  # Unlock
 	close $fh;

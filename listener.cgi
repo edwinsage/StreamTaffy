@@ -184,7 +184,7 @@ else  {
 my $command = "cd $dir;./overlay_event.pl " . join( ' ', @args );
 
 debug 2,"Running $command\n";
-&dispatch ($command);
+dispatch($command);
 
 
 
@@ -197,7 +197,7 @@ sub debug ($$)  {
 	my ($level, $msg) = @_;
 	return unless $cfg{debug_level} >= $level;
 	chomp $msg;
-	print DEBUG &timestamp . " DEBUG$level: $msg\n";
+	print DEBUG timestamp() . " DEBUG$level: $msg\n";
 	#warn "DEBUG$level: $msg";
 	}
 
