@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with StreamTaffy.  If not, see <https://www.gnu.org/licenses/>.
 #
-# Copyright 2021 Michael Pirkola
+# Copyright 2021, 2022 Michael Pirkola
 
 
 use v5.20;
@@ -73,8 +73,9 @@ if ($cfg{debug_level})  {
 	}
 
 
-my $template;
 
+# Parse command line arguments.
+my $template;
 my $type = shift @ARGV;
 my @page;
 
@@ -90,16 +91,10 @@ if ($type eq 'channel.follow')  {
 	                  );
 	
 	
-	my @templates = glob "$cfg{overlay_follow}";
+	# Get a template.
+	my $fh = get_template_fh("overlay_follow");
 	
-	unless (@templates)  {
-		debug 1,"No templates found matching pattern $cfg{overlay_follow}";
-		exit;
-		}
-	
-	my $fh;
-	open $fh, '<', $templates[int(rand(@templates))]
-	   or debug 1,"Missing follow template '$cfg{overlay_follow}': $!";
+	# Create the page based off the template.
 	while (<$fh>)  {
 		s/\$USER_NAME/$user_name/g;
 		push @page, $_;
@@ -130,21 +125,16 @@ elsif ($type eq 'channel.subscribe')  {
 	
 	
 	
-	my @templates = glob "$cfg{overlay_newsub}";
+	# Get a template.
+	my $fh = get_template_fh("overlay_newsub");
 	
-	unless (@templates)  {
-		debug 1,"No templates found matching pattern $cfg{overlay_newsub}";
-		exit;
-		}
-	
-	open TEMPLATE, '<', $templates[int(rand(@templates))]
-	   or debug 1,"Missing sub template '$cfg{overlay_newsub}': $!";
-	while (<TEMPLATE>)  {
+	# Create the page based off the template.
+	while (<$fh>)  {
 		s/\$USER_NAME/$user_name/g;
 		push @page, $_;
 		
 		}
-	close TEMPLATE;
+	close $fh;
 	
 	}
 elsif ($type eq 'channel.subscription.message')  {
@@ -171,23 +161,18 @@ elsif ($type eq 'channel.subscription.message')  {
 	#$message =~ s/</\&lt;/g;
 	#$message =~ s/>/\&gt;/g;
 	
-	my @templates = glob "$cfg{overlay_resub}";
+	# Get a template.
+	my $fh = get_template_fh("overlay_resub");
 	
-	unless (@templates)  {
-		debug 1,"No templates found matching pattern $cfg{overlay_resub}";
-		exit;
-		}
-	
-	open TEMPLATE, '<', $templates[int(rand(@templates))]
-	   or debug 1,"Missing sub template '$cfg{overlay_resub}': $!";
-	while (<TEMPLATE>)  {
+	# Create the page based off the template.
+	while (<$fh>)  {
 		s/\$USER_NAME/$user_name/g;
 		#s/\$MESSAGE/$message/g;
 		s/\$MONTHS/$months/g;
 		push @page, $_;
 		
 		}
-	close TEMPLATE;
+	close $fh;
 	
 	}
 else  {
@@ -195,8 +180,17 @@ else  {
 	exit;
 	}
 
+# Now display the result!
 &overlay_event(@page);
 
+
+
+
+
+
+#################
+#  Subroutines  #
+#################
 
 sub overlay_event  {
 	# Use a lock file to block other operations.
@@ -261,7 +255,8 @@ sub first_time_event  {
 	my %event = @_;
 	
 	# Check for a previous instance of a user event,
-	# and log it if it's the first.
+	# and either logs it if it's the first,
+	# or exits if it's a repeat.
 	
 	# %event should contain a user_name, user_id, and type.
 	
@@ -330,5 +325,29 @@ sub duplicate_event_check  {
 	# If no duplicate was detected, return false.
 	return 0;
 	}
+
+
+sub get_template_fh  {
+	my ($type) = @_;
+	
+	my $fh;
+	
+	# Locate the templates.
+	my @templates = <$cfg{$type}>;
+	
+	unless (@templates)  {
+		debug 1,"No templates found matching pattern $cfg{$type}";
+		exit;
+		}
+	
+	# Pick one randomly if there are multiple follower templates.
+	unless ( open $fh, '<', $templates[int(rand(@templates))] )  {
+		debug 1,"Missing template '$cfg{$type}': $!";
+		exit;
+		}
+	
+	return $fh;
+	}
+
 
 
