@@ -240,7 +240,7 @@ sub debug ($$)  {
 	my ($level, $msg) = @_;
 	return unless $cfg{debug_level} >= $level;
 	chomp $msg;
-	print DEBUG timestamp() . " DEBUG$level: $msg\n";
+	print DEBUG timestamp() . " $0($level): $msg\n";
 	warn "DEBUG$level: $msg";
 	}
 
